@@ -6,6 +6,7 @@ public class Vector3D {
 	private final double magnitude;
 	
 	public static final Vector3D ORIGIN = new Vector3D(0.0, 0.0, 0.0);
+	public static final Vector3D[] ZERO_STATE = {ORIGIN, ORIGIN};
 	
 	public Vector3D(double x, double y, double z) {
 		this.x = x;

@@ -1,26 +1,46 @@
+import java.util.ArrayList;
+
 // Represents a space object with mass (kilograms), a semimajor axis (meters), a body orbited (other SpaceObject object), and a state vector (StateVector object). 
 public class SpaceObject {
 	
 	private static final double grav_const = 6.6743015 * Math.pow(10, -11);
 	
-	private final double mu; 
-	private final SpaceObject orbited_body;
+	private final String name;
+	private final double mu;
+	private final double radius;
+	private SpaceObject orbited_body;
 	private Vector3D position;
 	private Vector3D velocity;
+	private ArrayList<Vector3D[]> trajectory;
 	private Orbit orbit;
 	
-	public SpaceObject(double mass, SpaceObject orbited_body, Vector3D position, Vector3D velocity) {
+	public SpaceObject(String name, double mass, double radius, SpaceObject orbited_body, Vector3D position, Vector3D velocity) {
+		this.name = name;
 		this.mu = computeMu(mass);
-		this.orbited_body = orbited_body;
+		this.radius = radius;
 		this.position = position;
 		this.velocity = velocity;
-		this.orbit = computeOrbit(position, velocity, orbited_body);		
-		
+		this.setOrbitedBody(orbited_body);
 	}
 	
 //	Returns the Mu value of this SpaceObject
 	public double getMu() {
 		return this.mu;
+	}
+	
+//	Returns the name of this SpaceObject
+	public String getName() {
+		return this.name;
+	}
+	
+//	Returns the radius of this SpaceObject
+	public double getRadius() {
+		return this.radius;
+	}
+	
+//	Returns the trajectory of this SpaceObject
+	public ArrayList<Vector3D[]> getTrajectory() {
+		return this.trajectory;
 	}
 	
 //	Returns the current position of this SpaceObject
@@ -38,6 +58,20 @@ public class SpaceObject {
 		Vector3D[] state = {this.position, this.velocity};
 		
 		return state;
+	}
+	
+//	Set the object that this body orbits, necessary for some calculations
+	public void setOrbitedBody(SpaceObject orbited_body) {
+		this.orbited_body = orbited_body;
+		this.orbit = computeOrbit(this.position, this.velocity, this.orbited_body);
+	}
+	
+//	Change this body's state. This method automatically appends the previous location to the object's trajectory
+	public void move(Vector3D[] new_state) {
+		Vector3D[] old_state = this.getState();
+
+		this.trajectory.add(old_state);
+		this.setState(new_state);
 	}
 	
 //	Return the SpaceObject that this SpaceObject orbits, or null if there isn't one

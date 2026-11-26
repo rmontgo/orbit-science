@@ -1,6 +1,7 @@
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Hashtable;
+import java.util.HashSet;
 import java.util.Objects;
 
 public class OrbitPropagator {
@@ -139,6 +140,19 @@ public class OrbitPropagator {
 		
 		return distance;
 	}
+	
+//	Given a body and the set of all bodies pulling on it, determine the acceleration due to gravity it is currently experiencing.
+	public Vector3D simAcceleration(SpaceObject body, HashSet<SpaceObject> sim_bodies) {
+		Vector3D current_pos = body.getPosition();
+		Vector3D total_acceleration = Vector3D.ORIGIN;
+		
+		for (SpaceObject sim_body : sim_bodies) {
+			Vector3D sim_acceleration = getAcceleration(current_pos, sim_body);
+			total_acceleration.addVector(sim_acceleration);
+		}
+		
+		return total_acceleration;
+	}
 
 //	Given a time step in seconds, propagate the object's orbit forward. Returns the end position and velocity in meters and meters/second.
 	private Vector3D[] propagate(SpaceObject body) {
@@ -146,13 +160,12 @@ public class OrbitPropagator {
 		Vector3D initial_velocity = body.getVelocity();
 		Vector3D initial_acceleration = orbitAcceleration(body);
 		
-		Vector3D[] zero_state = {Vector3D.ORIGIN, Vector3D.ORIGIN};
 		Vector3D[] result = new Vector3D[2]; 
 		
 		if (initial_acceleration.getMagnitude() != 0.0) {
 			double half_timestep = this.timestep * 0.5;
 			
-			Vector3D[] k1 = kEstimate(body, zero_state, 0);
+			Vector3D[] k1 = kEstimate(body, Vector3D.ZERO_STATE, 0);
 			Vector3D[] k2 = kEstimate(body, k1, half_timestep);
 			Vector3D[] k3 = kEstimate(body, k2, half_timestep);
 			Vector3D[] k4 = kEstimate(body, k3, this.timestep);
@@ -171,13 +184,13 @@ public class OrbitPropagator {
 	}
 
 	// Determine the acceleration due to gravity that the first SpaceObject experiences from the second
-	private static Vector3D getAcceleration(Vector3D position, SpaceObject orbited_body) {
+	private static Vector3D getAcceleration(Vector3D position, SpaceObject sim_body) {
 		// Order matters here. The position must be subtracted from the orbited body's position. The other way around will mess stuff up
-		Vector3D distance = orbited_body.getPosition().subtractVector(position);
+		Vector3D distance = sim_body.getPosition().subtractVector(position);
 		
 		double distance_magnitude = distance.getMagnitude();
 		double distance_cubed = Math.pow(distance_magnitude, 3);
-		double fraction = orbited_body.getMu() / distance_cubed;
+		double fraction = sim_body.getMu() / distance_cubed;
 		
 		Vector3D acceleration = distance.multiplyScalar(fraction);
 		
